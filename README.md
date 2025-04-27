@@ -31,8 +31,6 @@ More information about this plugin is under the hood - check out the solution an
 * **m0th** - *Plugin*
 * **brainiac** - *MacroQuest*
 
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
-
 ## Acknowledgments
 
 * A big thanks to brainiac for their continued assistance with this project.
