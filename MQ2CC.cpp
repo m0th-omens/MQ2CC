@@ -12,30 +12,13 @@
 PreSetup("MQ2CC");
 PLUGIN_VERSION(0.1);
 
-// Implement OnHooked
-void CharacterCreationOverride::OnHooked(CharacterCreationOverride* pWnd)
-{
-	DebugSpewAlways("CharacterCreationOverride::OnHooked called");
+/////////////////////////////
+// CUSTOM PLUGIN FUNCTIONS //
+/////////////////////////////
 
-	// SYNC the character creation window with the current player profile
-	CheckClassScreenButtons(pCharacterCreation);
-	// Add any custom logic here
-	GetCurrentSelection();
-}
-
-// Implement OnAboutToUnhook
-void CharacterCreationOverride::OnAboutToUnhook(CharacterCreationOverride* pWnd)
-{
-	DebugSpewAlways("CharacterCreationOverride::OnAboutToUnhook called");
-	// Add any cleanup logic here
-}
-
-// PostDraw implementation
-int CharacterCreationOverride::PostDraw()
-{
-	return Super::PostDraw();
-}
-
+// Looks for the class screen buttons and their states.
+// Synchronizes the Class ID with currently Selected Button.
+// Ensures class17 button is functionally consistent with other class buttons.
 void CheckClassScreenButtons(CCharacterCreation* pCharacterCreation)
 {
 	if (!pCharacterCreation)
@@ -53,23 +36,43 @@ void CheckClassScreenButtons(CCharacterCreation* pCharacterCreation)
 	}
 
 	// Check for CC_Runeknight_Overlay_Button
-	CXWnd* pRuneknightButton = pClassScreen->GetChildItem("CC_Class_Runeknight_Overlay_Button");
-	if (pRuneknightButton)
+	CXWnd* pRuneknightOverlayButton = pClassScreen->GetChildItem("CC_Class_Runeknight_Overlay_Button");
+	if (pRuneknightOverlayButton)
 	{
-		if (pRuneknightButton->IsVisible())
+		if (pRuneknightOverlayButton->IsVisible())
 		{
 			DebugSpewAlways("CheckClassScreenButtons: CC_Class_Runeknight_Overlay_Button is visible. Disabling visibility.");
-			pRuneknightButton->SetVisible(false);
+			pRuneknightOverlayButton->SetVisible(false);
 		}
 		else
 		{
 			DebugSpewAlways("CheckClassScreenButtons: CC_Class_Runeknight_Overlay_Button is already disabled.");
+		}
+
+		if (pRuneknightOverlayButton->bActive) 
+		{
+			DebugSpewAlways("CheckClassScreenButtons: CC_Class_Runeknight_Overlay_Button is active. Disabling active state.");
+			pRuneknightOverlayButton->bActive = false;
+		}
+		else
+		{
+			DebugSpewAlways("CheckClassScreenButtons: CC_Class_Runeknight_Overlay_Button is already inactive.");
 		}
 	}
 	else
 	{
 		DebugSpewAlways("CheckClassScreenButtons: CC_Class_Runeknight_Overlay_Button not found.");
 	}
+
+	// Ensure CC_Runeknight_Button is visible and has tooltip
+	CXWnd* pRuneknightButton = pClassScreen->GetChildItem("CC_Class_Runeknight_Button");
+	if (pRuneknightButton)
+	{
+		pRuneknightButton->SetVisible(true); // Ensure visibility
+		pRuneknightButton->Tooltip = "Runeknight"; // Set tooltip
+		pRuneknightButton->AddStyle(CWS_TOOLTIP_NODELAY);
+	}
+
 
 	// Store all buttons in an array
 	std::vector<CButtonWnd*> classButtons;
@@ -106,7 +109,7 @@ void CheckClassScreenButtons(CCharacterCreation* pCharacterCreation)
 	DebugSpewAlways("CheckClassScreenButtons: Checked button Screen ID = %s", screenID.c_str());
 
 	// Compare the Screen ID with buttonName results from the switch case
-	/*if (pLocalPC && pLocalPC->GetCurrentPcProfile())
+	if (pLocalPC && pLocalPC->GetCurrentPcProfile())
 	{
 		int classID = pLocalPC->GetCurrentPcProfile()->GetClass();
 		std::string buttonName;
@@ -166,6 +169,7 @@ void CheckClassScreenButtons(CCharacterCreation* pCharacterCreation)
 			{
 				// Update the player's class ID
 				pLocalPC->GetCurrentPcProfile()->Class = newClassID;
+				pLocalPC->ProfileManager.GetCurrentProfile()->Class = newClassID;
 				DebugSpewAlways("CheckClassScreenButtons: Updated class ID to %d based on Screen ID.", newClassID);
 			}
 			else
@@ -173,7 +177,7 @@ void CheckClassScreenButtons(CCharacterCreation* pCharacterCreation)
 				DebugSpewAlways("CheckClassScreenButtons: No matching class ID for Screen ID = %s", screenID.c_str());
 			}
 		}
-	}*/
+	}
 }
 
 // Converts classID to class name string
@@ -202,11 +206,12 @@ std::string GetClassName(int classID)
 	}
 }
 
+// Get the player's class and logs it.
 void GetPlayerClass()
 {
 	if (!pLocalPC)
 	{
-		WriteChatf("GetPlayerClass: pLocalPC is null.");
+		DebugSpewAlways("GetPlayerClass: pLocalPC is null.");
 		return;
 	}
 
@@ -214,7 +219,7 @@ void GetPlayerClass()
 	auto* pProfile = pLocalPC->ProfileManager.GetCurrentProfile();
 	if (!pProfile)
 	{
-		WriteChatf("GetPlayerClass: Failed to retrieve player profile.");
+		DebugSpewAlways("GetPlayerClass: Failed to retrieve player profile.");
 		return;
 	}
 
@@ -223,14 +228,15 @@ void GetPlayerClass()
 	std::string className = GetClassName(classID);
 
 	// Log the class information
-	WriteChatf("GetPlayerClass: Class ID = %d, Class Name = %s", classID, className.c_str());
+	DebugSpewAlways("GetPlayerClass: Class ID = %d, Class Name = %s", classID, className.c_str());
 }
 
+// Get the current selection from the character creation screen
 void GetCurrentSelection()
 {
 	if (!pCharacterCreation)
 	{
-		WriteChatf("GetCurrentSelection: pCharacterCreation is null.");
+		DebugSpewAlways("GetCurrentSelection: pCharacterCreation is null.");
 		return;
 	}
 
@@ -238,11 +244,11 @@ void GetCurrentSelection()
 	CXWnd* pClassScreen = pCharacterCreation->GetChildItem("CC_ClassScreen");
 	if (!pClassScreen)
 	{
-		WriteChatf("GetCurrentSelection: CC_ClassScreen not found.");
+		DebugSpewAlways("GetCurrentSelection: CC_ClassScreen not found.");
 		return;
 	}
 
-	WriteChatf("GetCurrentSelection: Iterating through child items in CC_ClassScreen.");
+	DebugSpewAlways("GetCurrentSelection: Iterating through child items in CC_ClassScreen.");
 
 	// Iterate through all child windows of the container
 	for (CXWnd* pChild = pClassScreen->GetFirstChildWnd(); pChild != nullptr; pChild = pChild->GetNextSiblingWnd())
@@ -255,7 +261,7 @@ void GetCurrentSelection()
 				const char* screenID = pChild->GetXMLData() ? pChild->GetXMLData()->ScreenID.c_str() : "(Unknown)";
 				const char* windowText = pChild->GetTooltip().c_str();
 
-				WriteChatf("GetCurrentSelection: Button Checked - ScreenID: %s, Text: %s",
+				DebugSpewAlways("GetCurrentSelection: Button Checked - ScreenID: %s, Text: %s",
 					screenID ? screenID : "(null)",
 					windowText ? windowText : "(null)");
 				GetPlayerClass();
@@ -263,15 +269,43 @@ void GetCurrentSelection()
 		}
 		else
 		{
-			WriteChatf("GetCurrentSelection: Non-button item: %s", pChild->GetXMLName().c_str());
+			DebugSpewAlways("GetCurrentSelection: Non-button item: %s", pChild->GetXMLName().c_str());
 		}
 	}
+}
+
+///////////////////////////
+// CORE PLUGIN FUNCTIONS //
+///////////////////////////
+
+// Implement OnHooked
+void CharacterCreationOverride::OnHooked(CharacterCreationOverride* pWnd)
+{
+	DebugSpewAlways("CharacterCreationOverride::OnHooked called");
+
+	// SYNC the character creation window with the current player profile
+	CheckClassScreenButtons(pCharacterCreation);
+	// Add any custom logic here
+	GetCurrentSelection();
+}
+
+// Implement OnAboutToUnhook
+void CharacterCreationOverride::OnAboutToUnhook(CharacterCreationOverride* pWnd)
+{
+	DebugSpewAlways("CharacterCreationOverride::OnAboutToUnhook called");
+	// Add any cleanup logic here
+}
+
+// PostDraw implementation
+int CharacterCreationOverride::PostDraw()
+{
+	return Super::PostDraw();
 }
 
 // HandleLButtonDown implementation
 int CharacterCreationOverride::HandleLButtonDown(const CXPoint& pos, uint32_t flags)
 {
-	WriteChatf("CharacterCreationOverride::HandleLButtonDown called at position (%d, %d)", pos.x, pos.y);
+	DebugSpewAlways("CharacterCreationOverride::HandleLButtonDown called at position (%d, %d)", pos.x, pos.y);
 
 	// Convert the cursor position to local or world coordinates if needed
 	CXPoint localPos = pos; // Adjust this based on your coordinate system
@@ -282,7 +316,7 @@ int CharacterCreationOverride::HandleLButtonDown(const CXPoint& pos, uint32_t fl
 		CXWnd* pClassScreen = pCharacterCreation->GetChildItem("CC_ClassScreen");
 		if (pClassScreen && pClassScreen->GetScreenRect().ContainsPoint(localPos))
 		{
-			WriteChatf("Cursor is over the CC_ClassScreen.");
+			DebugSpewAlways("Cursor is over the CC_ClassScreen.");
 			// Add additional logic here
 		}
 	}
@@ -296,6 +330,10 @@ int CharacterCreationOverride::HandleLButtonDown(const CXPoint& pos, uint32_t fl
  * But if you must have them, here is the place to put them.
  */
 // bool ShowMQ2CCWindow = true;
+
+////////////////
+// PLUGIN API //
+////////////////
 
 /**
  * @fn InitializePlugin
@@ -323,14 +361,13 @@ PLUGIN_API void InitializePlugin()
  */
 PLUGIN_API void ShutdownPlugin()
 {
-	DebugSpewAlways("MQ2CC::Shutting down");
-
-	// Remove the hook from pCharacterCreation
 	if (pCharacterCreation)
 	{
 		CharacterCreationOverride::RemoveHooks(pCharacterCreation);
-		DebugSpewAlways("Unhooked from pCharacterCreation");
+		DebugSpewAlways("MQ2CC::Unhooked from pCharacterCreation in ShutdownPlugin.");
 	}
+
+	DebugSpewAlways("MQ2CC::Shutdown complete.");
 }
 
 /**
@@ -346,7 +383,11 @@ PLUGIN_API void ShutdownPlugin()
  */
 PLUGIN_API void OnCleanUI()
 {
-	// DebugSpewAlways("MQ2CC::OnCleanUI()");
+	if (pCharacterCreation)
+	{
+		CharacterCreationOverride::RemoveHooks(pCharacterCreation);
+		DebugSpewAlways("MQ2CC::Unhooked from pCharacterCreation in OnCleanUI.");
+	}
 }
 
 /**
@@ -361,9 +402,6 @@ PLUGIN_API void OnCleanUI()
  */
 PLUGIN_API void OnReloadUI()
 {
-	DebugSpewAlways("MQ2CC::OnReloadUI");
-
-	// Reapply the hook after the UI is reloaded
 	if (pCharacterCreation)
 	{
 		CharacterCreationOverride::InstallHooks(pCharacterCreation);
@@ -418,7 +456,6 @@ PLUGIN_API void SetGameState(int GameState)
 {
 	// DebugSpewAlways("MQ2CC::SetGameState(%d)", GameState);
 }
-
 
 /**
  * @fn OnPulse

@@ -19,38 +19,6 @@ public:
 	// Override mouse handling
 	virtual int HandleLButtonDown(const CXPoint& pos, uint32_t flags) override;
 
-	bool IsCharacterNameValid(CCharacterCreation* pCharacterCreation)
-	{
-		if (!pCharacterCreation)
-		{
-			DebugSpewAlways("IsCharacterNameValid: pCharacterCreation is null.");
-			return false;
-		}
-
-		// Retrieve the character name input field
-		CXWnd* pNameInput = pCharacterCreation->GetChildItem("CC_NameInput");
-		if (!pNameInput)
-		{
-			DebugSpewAlways("IsCharacterNameValid: CC_NameInput not found.");
-			return false;
-		}
-
-		// Get the text from the input field
-		CXStr nameText = pNameInput->GetWindowText();
-		std::string characterName = nameText.c_str();
-
-		// Check if the name is empty
-		if (characterName.empty())
-		{
-			DebugSpewAlways("IsCharacterNameValid: Character name is empty.");
-			return false;
-		}
-
-		// Add additional validation logic if needed (e.g., length, special characters)
-		DebugSpewAlways("IsCharacterNameValid: Character name is valid: %s", characterName.c_str());
-		return true;
-	}
-
 	// Override WndNotification to handle notifications
 	int CharacterCreationOverride::WndNotification(CXWnd* pWnd, uint32_t Message, void* pData) override
 	{
@@ -85,54 +53,31 @@ public:
 				// If a valid class button was clicked, handle the logic
 				if (classID > 0)
 				{
-					DebugSpewAlways("CharacterCreationOverride: Class button clicked. Class ID = %d", classID);
+					WriteChatf("CharacterCreationOverride: Class button clicked. Class ID = %d", classID);
 
 					// Perform any logic for the selected class
 					HandleClassSelection(classID);
 				}
 			}
 
-			if (screenID && strcmp(screenID, "CC_Create_Button") == 0)
-			{
-				DebugSpewAlways("CharacterCreationOverride: CC_Create_Button clicked.");
-
-				// Validate the character name
-				if (IsCharacterNameValid(pCharacterCreation))
-				{
-					DebugSpewAlways("CharacterCreationOverride: Character name is valid. Shutting down plugin.");
-
-					// Call ShutdownPlugin to clean up the plugin
-					DebugSpewAlways("MQ2CC::Shutting down");
-
-					// Remove the hook from pCharacterCreation
-					if (pCharacterCreation)
-					{
-						CharacterCreationOverride::RemoveHooks(pCharacterCreation);
-						DebugSpewAlways("Unhooked from pCharacterCreation");
-					}
-				}
-				else
-				{
-					DebugSpewAlways("CharacterCreationOverride: Invalid character name. Plugin shutdown aborted.");
-				}
-			}
 		}
 
 		// Call the base class implementation
 		return Super::WndNotification(pWnd, Message, pData);
 	}
 
+	// Assistive function to handle class selection
 	void CharacterCreationOverride::HandleClassSelection(int classID)
 	{
 		// Example logic for handling class selection
 		DebugSpewAlways("CharacterCreationOverride::HandleClassSelection called for Class ID = %d", classID);
 
 		// Update the player's class or perform other actions
-		/*if (pLocalPC && pLocalPC->GetCurrentPcProfile())
+		if (pLocalPC && pLocalPC->GetCurrentPcProfile())
 		{
 			pLocalPC->GetCurrentPcProfile()->Class = classID;
 			DebugSpewAlways("CharacterCreationOverride: Updated player class to %d", classID);
-		}*/
+		}
 	}
 };
 
