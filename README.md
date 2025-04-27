@@ -8,9 +8,13 @@ This plugin is UNDER DEVELOPMENT -- and is merely one component to overcome the 
 Include this plugin as you would with any other plugin in MacroQuest.
 
 -- Add it to the plugins folder.
+
 -- Include it to the MacroQuest solution.
+
 -- Set the branch to emu
+
 -- Compile as Release Win32
+
 
 ```txt
 /plugin MQ2CC
